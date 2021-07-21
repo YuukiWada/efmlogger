@@ -3,11 +3,9 @@ require "pi_piper"
 require "time"
 
 input_dir="/media/pi/data"
+device_path="/dev/sda1"
 
-
-def check_usb(input_dir)
-  device_path="/dev/sda1"
-  
+def check_usb(input_dir, device_path)
   if !File.exist?(input_dir) then
     `sudo mkdir -p #{input_dir}`
   end
@@ -34,7 +32,6 @@ def check_usb(input_dir)
   end
 end
 
-check_usb(input_dir)
 
 switch=PiPiper::Pin.new(:pin => 20, :direction => :in)
 led=PiPiper::Pin.new(:pin => 17, :direction => :out)
@@ -43,9 +40,11 @@ loop do
   time_past=time.strftime("%Y%m%d")
   switch.read
   if switch.on? then
+    check_usb(input_dir, device_path)
     time=Time.now
     tstring=time.strftime("%Y%m%d_%H%M%S")
     led.on
+    puts "Observation starts"
     `sudo ruby /home/pi/git/efmlogger/scripts/read_mcp.rb >> #{input_dir}/#{tstring}.csv &`
     loop do
       time=Time.now
@@ -53,10 +52,14 @@ loop do
       switch.read
       if switch.off? then
         `pkill -f read_mcp`
-        led.off
+        puts "Observation stops"
+        `sudo umount #{device_path}`
+        puts "/dev/sda1 unmounted"
         time_past=time_now
+        led.off
         break
       elsif time_now!=time_past then
+        puts "File changed"
         `pkill -f read_mcp`
         time_past=time_now
         break
