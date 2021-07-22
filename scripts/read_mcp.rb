@@ -11,15 +11,13 @@ PiPiper::Spi.begin do |spi|
     center = center << 8
     adc =  center + last
 
-    sleep 0.01
-    
     first, center, last = spi.write [0b00000001, 0b11000000, 0b00000000]
     center = center & 0b00001111
     center = center << 8
     pps =  center + last
 
-    #puts "#{Time.now.strftime('%s%L').to_i/1000.0},#{adc},#{pps}"
     puts "#{((Time.now.strftime('%s%L').to_i-start)/1000.0).round(3)},#{adc},#{pps}"
-    sleep 0.04
+    sleep 0.035
+    
   end
 end
