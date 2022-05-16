@@ -27,10 +27,10 @@ def check_usb(input_dir, device_path)
           return 0
         end
       else
-        puts "#{device_oath} is not inserted."
+        puts "#{device_path} is not inserted."
       end
-      sleep(5.0)
     end
+    sleep(5.0)
   end
 end
 
