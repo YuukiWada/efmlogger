@@ -3,32 +3,34 @@ require "pi_piper"
 require "time"
 
 input_dir="/media/pi/data"
-device_path="/dev/sda1"
+device_path=["/dev/sda1", "/dev/sdb1", "/dev/sdc1", "/dev/sdd1"] 
 
 def check_usb(input_dir, device_path)
   if !File.exist?(input_dir) then
     `sudo mkdir -p #{input_dir}`
   end
   loop do
-    if File.exist?(device_path) then
-      result=`mountpoint #{input_dir}`
-      if result.chomp=="#{input_dir} is not a mountpoint" then
-        puts "/dev/sda1 is not mounted."
-        `sudo umount #{device_path}`
-        sleep(2.0)
-        `sudo mount #{device_path} #{input_dir}`
-        sleep(2.0)
+    device_path.each do |device_path|
+      if File.exist?(device_path) then
+        result=`mountpoint #{input_dir}`
+        if result.chomp=="#{input_dir} is not a mountpoint" then
+          puts "/dev/sda1 is not mounted."
+          `sudo umount #{device_path}`
+          sleep(2.0)
+          `sudo mount #{device_path} #{input_dir}`
+          sleep(2.0)
+        end
+        
+        result=`mountpoint #{input_dir}`
+        if result.chomp!="#{input_dir} is not a mountpoint" then
+          puts "#{device_path} is mounted."
+          return 0
+        end
+      else
+        puts "#{device_oath} is not inserted."
       end
-      
-      result=`mountpoint #{input_dir}`
-      if result.chomp!="#{input_dir} is not a mountpoint" then
-        puts "/dev/sda1 is mounted."
-        return 0
-      end
-    else
-      puts "/dev/sda1 is not inserted."
+      sleep(5.0)
     end
-    sleep(5.0)
   end
 end
 
@@ -53,8 +55,19 @@ loop do
       if switch.off? then
         `pkill -f read_mcp`
         puts "Observation stops"
-        `sudo umount #{device_path}`
-        puts "/dev/sda1 unmounted"
+        sleep(5.0)
+        result=`sudo umount #{input_dir} 2>&1`
+        if result.include?("busy") then
+          loop do
+            sleep(5.0)
+            result=`sudo umount #{input_dir} 2>&1`
+            puts "Busy"
+            if !result.include?("busy") then
+              puts "Not busy"
+              break
+            end
+          end
+        end
         time_past=time_now
         led.off
         break
@@ -69,6 +82,7 @@ loop do
     end
   else
     led.off
+    `sudo umount #{input_dir}`
     sleep(5.0)
   end
 end
