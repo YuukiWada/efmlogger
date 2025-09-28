@@ -35,7 +35,8 @@ def check_usb(input_dir, device_path)
 end
 
 
-switch=PiPiper::Pin.new(:pin => 20, :direction => :in)
+#switch=PiPiper::Pin.new(:pin => 20, :direction => :in)
+switch=PiPiper::Pin.new(:pin => 20, :direction => :in, :pull => :down)
 led=PiPiper::Pin.new(:pin => 17, :direction => :out)
 loop do
   time=Time.now
